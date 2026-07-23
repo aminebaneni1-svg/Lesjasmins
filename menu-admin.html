@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Les Jasmins — Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --blue-deep:#4A2E5C;
+    --blue-bright:#8B5FA8;
+    --cream:#FAF7EF;
+    --cream-2:#F1ECDF;
+    --green-leaf:#4F7358;
+    --gold:#C9A227;
+    --charcoal:#262420;
+    --terracotta:#B5573D;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{ margin:0; background:var(--cream); font-family:'Work Sans', sans-serif; color:var(--charcoal); padding-bottom:100px; }
+  .header{ background:var(--blue-deep); color:white; padding:22px 20px 18px; text-align:center; }
+  .brand{ font-family:'Cormorant Garamond', serif; font-size:24px; font-weight:600; }
+  .subtitle{ font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-top:4px; }
+  .list{ padding:16px; display:flex; flex-direction:column; gap:10px; }
+  .row{
+    background:white; border-radius:12px; padding:12px 14px;
+    display:flex; align-items:center; gap:10px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.04);
+  }
+  .row input[type="text"]{
+    flex:1; border:1px solid var(--cream-2); border-radius:8px; padding:10px; font-size:15px; font-family:'Work Sans', sans-serif;
+  }
+  .row input[type="number"]{
+    width:70px; border:1px solid var(--cream-2); border-radius:8px; padding:10px; font-size:15px; text-align:center; font-family:'Work Sans', sans-serif;
+  }
+  .row .unit{ font-size:13px; color:#8a8175; }
+  .row .del{
+    background:none; border:none; color:var(--terracotta); font-size:20px; padding:4px 6px; cursor:pointer;
+  }
+  .add-btn{
+    margin:6px 16px; background:white; border:1.5px dashed var(--blue-deep); color:var(--blue-deep);
+    padding:14px; border-radius:12px; font-weight:600; font-size:14px; cursor:pointer; text-align:center;
+  }
+  .status{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--green-leaf); color:white; padding:8px 18px; border-radius:999px;
+    font-size:13px; opacity:0; transition:opacity 0.3s ease; pointer-events:none;
+  }
+  .status.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">✿ Les Jasmins</div>
+  <div class="subtitle">Gestion du menu</div>
+</div>
+
+<div class="list" id="list"></div>
+<div class="add-btn" onclick="addItem()">+ Ajouter un article</div>
+
+<div class="status" id="status">Enregistré ✓</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjIn3kgvH5l-89u9lEhnvj6_hd6dMO7lA",
+    authDomain: "les-jasmins-aaf50.firebaseapp.com",
+    databaseURL: "https://les-jasmins-aaf50-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "les-jasmins-aaf50",
+  };
+  let db = null;
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  } catch (e) {
+    console.warn("Firebase not configured", e);
+  }
+
+  const defaultMenu = {
+    espresso: { name: "Espresso", price: 5 },
+    glace: { name: "Glacé", price: 5 },
+    eau: { name: "Eau", price: 3.5 },
+  };
+
+  function showStatus() {
+    const el = document.getElementById("status");
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 1200);
+  }
+
+  function renderList(data) {
+    const list = document.getElementById("list");
+    const entries = Object.entries(data || {});
+    if (entries.length === 0) {
+      list.innerHTML = `<div style="text-align:center; color:#9a9184; padding:20px 0;">Aucun article. Ajoutez-en un ci-dessous.</div>`;
+      return;
+    }
+    list.innerHTML = entries.map(([key, item]) => `
+      <div class="row">
+        <input type="text" value="${item.name}" onchange="updateItem('${key}', 'name', this.value)">
+        <input type="number" step="0.5" value="${item.price}" onchange="updateItem('${key}', 'price', this.value)">
+        <span class="unit">DT</span>
+        <button class="del" onclick="deleteItem('${key}')">✕</button>
+      </div>
+    `).join("");
+  }
+
+  function updateItem(key, field, value) {
+    if (!db) return;
+    const update = {};
+    update[field] = field === "price" ? parseFloat(value) || 0 : value;
+    db.ref("menu/" + key).update(update).then(showStatus);
+  }
+
+  function addItem() {
+    if (!db) return;
+    db.ref("menu").push({ name: "Nouvel article", price: 0 }).then(showStatus);
+  }
+
+  function deleteItem(key) {
+    if (!db) return;
+    if (confirm("Supprimer cet article ?")) {
+      db.ref("menu/" + key).remove().then(showStatus);
+    }
+  }
+
+  if (db) {
+    db.ref("menu").on("value", (snapshot) => {
+      let data = snapshot.val();
+      if (!data) {
+        // first time ever opening this page — seed with current defaults
+        db.ref("menu").set(defaultMenu);
+        data = defaultMenu;
+      }
+      renderList(data);
+    });
+  } else {
+    document.getElementById("list").innerHTML = `<div style="text-align:center; color:var(--terracotta); padding:20px;">⚠️ Firebase non configuré</div>`;
+  }
+</script>
+</body>
+</html>

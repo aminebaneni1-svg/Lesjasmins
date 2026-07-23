@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<title>Les Jasmins — Staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --blue-deep:#4A2E5C;
+    --blue-bright:#8B5FA8;
+    --cream:#FAF7EF;
+    --cream-2:#F1ECDF;
+    --green-leaf:#4F7358;
+    --gold:#C9A227;
+    --charcoal:#262420;
+    --terracotta:#B5573D;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--charcoal);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+  }
+  .header{
+    background:var(--blue-deep);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='%23FFFFFF' opacity='0.07'%3E%3Cellipse cx='18' cy='10' rx='2.4' ry='4' /%3E%3Cellipse cx='18' cy='10' rx='2.4' ry='4' transform='rotate(72 18 16)'/%3E%3Cellipse cx='18' cy='10' rx='2.4' ry='4' transform='rotate(144 18 16)'/%3E%3Cellipse cx='18' cy='10' rx='2.4' ry='4' transform='rotate(216 18 16)'/%3E%3Cellipse cx='18' cy='10' rx='2.4' ry='4' transform='rotate(288 18 16)'/%3E%3Cellipse cx='54' cy='50' rx='2.4' ry='4' /%3E%3Cellipse cx='54' cy='50' rx='2.4' ry='4' transform='rotate(72 54 56)'/%3E%3Cellipse cx='54' cy='50' rx='2.4' ry='4' transform='rotate(144 54 56)'/%3E%3Cellipse cx='54' cy='50' rx='2.4' ry='4' transform='rotate(216 54 56)'/%3E%3Cellipse cx='54' cy='50' rx='2.4' ry='4' transform='rotate(288 54 56)'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 72px 72px;
+    color:var(--cream);
+    padding:22px 20px 18px;
+    text-align:center;
+  }
+  .brand{
+    font-family:'Cormorant Garamond', serif;
+    font-size:26px;
+    font-weight:600;
+    letter-spacing:1px;
+    margin:0;
+  }
+  .brand .jasmine{ color:var(--gold); margin-right:6px; }
+  .subtitle{
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-top:4px;
+  }
+  .status-bar{
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    padding:12px;
+    font-size:12px;
+    color:#7a7367;
+    background:var(--cream-2);
+  }
+  .status-bar .dot{ display:inline-block; width:8px;height:8px;border-radius:50%; margin-right:5px; }
+
+  .notif-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px 4px;
+  }
+  .notif-title{
+    font-family:'Cormorant Garamond', serif;
+    font-size:19px;
+    font-weight:600;
+    color:var(--blue-deep);
+  }
+  .notif-title .count{
+    display:inline-block;
+    background:var(--terracotta);
+    color:white;
+    font-family:'Work Sans', sans-serif;
+    font-size:12px;
+    font-weight:700;
+    border-radius:999px;
+    padding:1px 8px;
+    margin-left:6px;
+    vertical-align:middle;
+  }
+  .enable-btn{
+    background:white;
+    border:1.5px solid var(--blue-deep);
+    color:var(--blue-deep);
+    font-size:12px;
+    font-weight:600;
+    padding:7px 12px;
+    border-radius:999px;
+    cursor:pointer;
+  }
+  .feed{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:10px 16px 6px;
+  }
+  .feed-empty{
+    color:#9a9184;
+    font-size:13px;
+    text-align:center;
+    padding:14px 0 4px;
+  }
+  .feed-item{
+    background:white;
+    border-left:5px solid var(--charcoal);
+    border-radius:10px;
+    padding:12px 14px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    animation:slideIn 0.25s ease;
+  }
+  @keyframes slideIn{
+    from{ opacity:0; transform:translateY(-8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .feed-item.type-call{ border-color:var(--blue-bright); }
+  .feed-item.type-bill{ border-color:var(--gold); }
+  .feed-item.type-cancel{ border-color:var(--terracotta); }
+  .feed-item.type-order{ border-color:var(--green-leaf); }
+  .feed-info .title{ font-weight:600; font-size:14px; color:var(--charcoal); }
+  .feed-info .sub{ font-size:12px; color:#8a8175; margin-top:2px; }
+  .feed-done-btn{
+    background:var(--cream-2);
+    border:none;
+    color:var(--green-leaf);
+    font-weight:600;
+    font-size:12px;
+    padding:9px 12px;
+    border-radius:8px;
+    white-space:nowrap;
+    cursor:pointer;
+  }
+  .feed-done-btn:active{ background:var(--green-leaf); color:white; }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:12px;
+    padding:16px;
+  }
+  .card{
+    background:white;
+    border:2px solid var(--cream-2);
+    border-radius:14px;
+    padding:14px 8px;
+    text-align:center;
+    position:relative;
+    transition:transform 0.15s ease;
+    cursor:pointer;
+  }
+  .card:active{ transform:scale(0.95); }
+  .card .num{
+    font-family:'Cormorant Garamond', serif;
+    font-size:26px;
+    font-weight:600;
+    color:var(--charcoal);
+  }
+  .card .label{
+    font-size:10px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:#9a9184;
+    margin-top:2px;
+  }
+  .card.occupied:not(.active){ background:#F3EFEA; border-color:#D8CFC2; }
+  .card.occupied:not(.active) .label{ color:var(--green-leaf); font-weight:600; }
+  .card.active-call{ border-color:var(--blue-bright); background:#EAF2F8; animation:pulse 1.4s infinite; }
+  .card.active-bill{ border-color:var(--gold); background:#FBF4DF; animation:pulse 1.4s infinite; }
+  .card.active-cancel{ border-color:var(--terracotta); background:#FBEAE5; animation:pulse 1.4s infinite; }
+  .card.active-order{ border-color:var(--green-leaf); background:#EBF2ED; animation:pulse 1.4s infinite; }
+  .card.active .num, .card.active .label{ color:var(--charcoal); }
+  .card .bloom{
+    position:absolute;
+    top:-6px; right:-6px;
+    font-size:16px;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(0,0,0,0.08); }
+    70%{ box-shadow:0 0 0 8px rgba(0,0,0,0); }
+    100%{ box-shadow:0 0 0 0 rgba(0,0,0,0); }
+  }
+
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(20,20,18,0.55);
+    display:none;
+    align-items:flex-end;
+    z-index:50;
+  }
+  .overlay.show{ display:flex; }
+  .sheet{
+    background:white;
+    width:100%;
+    border-radius:20px 20px 0 0;
+    padding:24px 22px calc(24px + env(safe-area-inset-bottom));
+  }
+  .sheet-title{
+    font-family:'Cormorant Garamond', serif;
+    font-size:24px;
+    font-weight:600;
+    color:var(--blue-deep);
+    margin:0 0 4px;
+  }
+  .sheet-type{
+    font-size:13px;
+    color:#7a7367;
+    margin-bottom:16px;
+  }
+  .order-items{
+    background:var(--cream-2);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:18px;
+    font-size:14px;
+  }
+  .order-items div{ display:flex; justify-content:space-between; padding:3px 0; }
+  .sheet-actions{ display:flex; gap:10px; }
+  .sheet-actions button{
+    flex:1;
+    border:none;
+    padding:14px;
+    border-radius:12px;
+    font-weight:600;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .btn-done{ background:var(--green-leaf); color:white; }
+  .btn-close{ background:var(--cream-2); color:var(--charcoal); }
+</style>
+</head>
+<body>
+
+<div id="pinScreen" style="position:fixed; inset:0; background:var(--blue-deep); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:200; padding:20px;">
+  <div style="font-family:'Cormorant Garamond', serif; font-size:28px; color:white; margin-bottom:4px;">✿ Les Jasmins</div>
+  <div style="color:var(--gold); font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-bottom:24px;">Espace staff</div>
+  <input id="pinInput" type="tel" inputmode="numeric" maxlength="6" placeholder="Code PIN" autocomplete="off"
+    style="width:200px; text-align:center; font-size:22px; letter-spacing:6px; padding:14px; border-radius:12px; border:none; margin-bottom:14px;">
+  <button onclick="checkPin()" style="background:var(--gold); color:white; border:none; padding:13px 30px; border-radius:10px; font-weight:600; font-size:15px; cursor:pointer;">Entrer</button>
+  <div id="pinError" style="color:#ffb4a8; font-size:13px; margin-top:12px; display:none;">Code incorrect</div>
+</div>
+
+<div class="header">
+  <div class="brand"><span class="jasmine-icon"><svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="6" rx="3.2" ry="5" fill="#FFFFFF"/><ellipse cx="12" cy="6" rx="3.2" ry="5" fill="#FFFFFF" transform="rotate(72 12 12)"/><ellipse cx="12" cy="6" rx="3.2" ry="5" fill="#FFFFFF" transform="rotate(144 12 12)"/><ellipse cx="12" cy="6" rx="3.2" ry="5" fill="#FFFFFF" transform="rotate(216 12 12)"/><ellipse cx="12" cy="6" rx="3.2" ry="5" fill="#FFFFFF" transform="rotate(288 12 12)"/><circle cx="12" cy="12" r="2.1" fill="#C9A227"/></svg></span>Les Jasmins</div>
+  <div class="subtitle">Espace staff</div>
+</div>
+<div class="status-bar">
+  <span><span class="dot" style="background:var(--blue-bright);"></span>Appel</span>
+  <span><span class="dot" style="background:var(--gold);"></span>Addition</span>
+  <span><span class="dot" style="background:var(--green-leaf);"></span>Commande</span>
+  <span><span class="dot" style="background:var(--terracotta);"></span>Annulation</span>
+</div>
+
+<div class="notif-bar">
+  <div class="notif-title">Notifications<span class="count" id="feedCount" style="display:none;">0</span></div>
+  <div style="display:flex; gap:8px;">
+    <button class="enable-btn" onclick="openHistory()">📜 Historique</button>
+    <button class="enable-btn" id="enableBtn" onclick="enableNotifications()">🔔 Alertes</button>
+  </div>
+</div>
+<div class="feed" id="feed"></div>
+
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <div class="sheet-title" id="sheetTitle">Table</div>
+    <div class="sheet-type" id="sheetType"></div>
+    <div class="order-items" id="orderItems" style="display:none;"></div>
+    <div class="order-items" id="tabItems" style="display:none;"></div>
+    <div class="sheet-actions">
+      <button class="btn-done" onclick="markDone()">Marquer traité</button>
+      <button class="btn-close" onclick="closeSheet()">Fermer</button>
+    </div>
+    <div class="sheet-actions" style="margin-top:10px;">
+      <button class="btn-done" style="background:var(--gold);" onclick="closeTab()">Clôturer l'addition</button>
+      <button class="btn-close" onclick="freeTable()">Libérer la table</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="historyOverlay">
+  <div class="sheet" style="max-height:70vh; overflow-y:auto;">
+    <div class="sheet-title">📜 Historique des ventes</div>
+    <div id="historyList" style="margin:12px 0;"></div>
+    <div class="sheet-actions">
+      <button class="btn-close" onclick="closeHistory()" style="width:100%;">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<audio id="chime" preload="auto">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
+
+<script>
+  // === FIREBASE CONFIG — REPLACE WITH YOUR OWN PROJECT CONFIG (same as client.html) ===
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjIn3kgvH5l-89u9lEhnvj6_hd6dMO7lA",
+    authDomain: "les-jasmins-aaf50.firebaseapp.com",
+    databaseURL: "https://les-jasmins-aaf50-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "les-jasmins-aaf50",
+  };
+  let db = null;
+  let firebaseReady = false;
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    firebaseReady = true;
+  } catch (e) {
+    console.warn("Firebase not configured yet:", e);
+  }
+
+  // === STAFF PIN — change this to your own code ===
+  const STAFF_PIN = "1234";
+
+  function checkPin() {
+    const val = document.getElementById("pinInput").value;
+    if (val === STAFF_PIN) {
+      sessionStorage.setItem("jasmins_staff_ok", "1");
+      document.getElementById("pinScreen").style.display = "none";
+    } else {
+      document.getElementById("pinError").style.display = "block";
+    }
+  }
+  if (sessionStorage.getItem("jasmins_staff_ok") === "1") {
+    document.getElementById("pinScreen").style.display = "none";
+  }
+  document.getElementById("pinInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkPin();
+  });
+
+  const TABLE_COUNT = 30;
+  let requestsData = {}; // key -> {table, type, items, time}
+  let tabsData = {}; // tableId -> { orders: { key: {items, time} } }
+  let occupiedData = {}; // tableId -> {since}
+  let activeTable = null;
+  let knownKeys = new Set();
+  let notificationsEnabled = false;
+
+  function getTabOrders(tableId) {
+    const t = tabsData[tableId];
+    if (!t || !t.orders) return [];
+    return Object.values(t.orders);
+  }
+
+  function getTabItemsAndTotal(tableId) {
+    const orders = getTabOrders(tableId);
+    const merged = {};
+    orders.forEach(o => {
+      (o.items || []).forEach(it => {
+        const key = it.name;
+        if (!merged[key]) merged[key] = { name: it.name, qty: 0, price: it.price };
+        merged[key].qty += it.qty;
+      });
+    });
+    const itemsList = Object.values(merged);
+    const total = itemsList.reduce((sum, it) => sum + it.qty * it.price, 0);
+    return { itemsList, total };
+  }
+
+  const typeLabels = {
+    call: "Demande un serveur",
+    bill: "Demande l'addition",
+    cancel: "Souhaite annuler",
+    order: "A passé une commande",
+  };
+  const typeShort = {
+    call: "🔔 Appel",
+    bill: "🧾 Addition",
+    cancel: "✕ Annulation",
+    order: "☕ Commande",
+  };
+
+  function buildGrid() {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    for (let i = 1; i <= TABLE_COUNT; i++) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.id = "card-" + i;
+      card.onclick = () => openSheet(i);
+      card.innerHTML = `<div class="num">${i}</div><div class="label">Libre</div>`;
+      grid.appendChild(card);
+    }
+  }
+
+  function entriesForTable(tableId) {
+    return Object.entries(requestsData)
+      .filter(([key, r]) => String(r.table) === String(tableId))
+      .sort((a, b) => a[1].time - b[1].time);
+  }
+
+  function renderState() {
+    // table grid coloring, based on the oldest pending request for each table
+    for (let i = 1; i <= TABLE_COUNT; i++) {
+      const card = document.getElementById("card-" + i);
+      const entries = entriesForTable(i);
+      const isOccupied = !!occupiedData[i];
+      card.className = "card";
+      const label = card.querySelector(".label");
+      if (entries.length > 0) {
+        card.classList.add("active", "active-" + entries[0][1].type);
+        label.innerText = typeShort[entries[0][1].type] || "Demande";
+      } else if (isOccupied) {
+        card.classList.add("occupied");
+        label.innerText = "Occupée";
+      } else {
+        label.innerText = "Libre";
+      }
+    }
+    renderFeed();
+  }
+
+  function renderFeed() {
+    const feed = document.getElementById("feed");
+    const countBadge = document.getElementById("feedCount");
+    const all = Object.entries(requestsData).sort((a, b) => a[1].time - b[1].time);
+
+    countBadge.style.display = all.length > 0 ? "inline-block" : "none";
+    countBadge.innerText = all.length;
+
+    if (all.length === 0) {
+      feed.innerHTML = `<div class="feed-empty">Aucune notification en attente</div>`;
+      return;
+    }
+
+    feed.innerHTML = all.map(([key, r]) => {
+      const timeStr = new Date(r.time).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+      let sub = timeStr;
+      if (r.type === "order" && r.items) {
+        sub = r.items.map(it => `${it.qty}× ${it.name}`).join(", ") + " · " + timeStr;
+      }
+      return `
+        <div class="feed-item type-${r.type}">
+          <div class="feed-info">
+            <div class="title">Table ${r.table} — ${typeShort[r.type] || r.type}</div>
+            <div class="sub">${sub}</div>
+          </div>
+          <button class="feed-done-btn" onclick="markOneDone('${key}')">Traité ✓</button>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function markOneDone(key) {
+    if (firebaseReady) {
+      db.ref("requests/" + key).remove();
+    }
+  }
+
+  function openSheet(tableId) {
+    const entries = entriesForTable(tableId);
+    activeTable = tableId;
+    document.getElementById("sheetTitle").innerText = "Table " + tableId;
+    const itemsBox = document.getElementById("orderItems");
+    if (entries.length > 0) {
+      document.getElementById("sheetType").innerText = entries.length + " demande(s) en attente";
+      itemsBox.style.display = "block";
+      itemsBox.innerHTML = entries.map(([key, r]) => {
+        let line = typeLabels[r.type] || r.type;
+        if (r.type === "order" && r.items) {
+          line += ": " + r.items.map(it => `${it.qty}× ${it.name}`).join(", ");
+        }
+        return `<div><span>${line}</span></div>`;
+      }).join("");
+    } else {
+      document.getElementById("sheetType").innerText = "Aucune demande en cours";
+      itemsBox.style.display = "none";
+    }
+
+    const tabBox = document.getElementById("tabItems");
+    const { itemsList, total } = getTabItemsAndTotal(tableId);
+    if (itemsList.length > 0) {
+      tabBox.style.display = "block";
+      tabBox.innerHTML = `<div style="font-weight:600; margin-bottom:6px; color:var(--blue-deep);">Addition en cours</div>` +
+        itemsList.map(it => `<div><span>${it.qty}× ${it.name}</span><span>${(it.qty * it.price).toFixed(1)} DT</span></div>`).join("") +
+        `<div style="border-top:1px solid #ddd; margin-top:6px; padding-top:6px; font-weight:700;"><span>Total</span><span>${total.toFixed(1)} DT</span></div>`;
+    } else {
+      tabBox.style.display = "none";
+    }
+
+    document.getElementById("overlay").classList.add("show");
+  }
+
+  function closeSheet() {
+    document.getElementById("overlay").classList.remove("show");
+    activeTable = null;
+  }
+
+  function markDone() {
+    // clears every pending entry for this table at once
+    if (activeTable && firebaseReady) {
+      entriesForTable(activeTable).forEach(([key]) => db.ref("requests/" + key).remove());
+    }
+    closeSheet();
+  }
+
+  function freeTable() {
+    if (activeTable && firebaseReady) {
+      db.ref("occupied/" + activeTable).remove();
+    }
+    closeSheet();
+  }
+
+  function closeTab() {
+    if (!activeTable || !firebaseReady) { closeSheet(); return; }
+    const { itemsList, total } = getTabItemsAndTotal(activeTable);
+    if (itemsList.length > 0) {
+      db.ref("history").push({
+        table: activeTable,
+        items: itemsList,
+        total: total,
+        closedAt: Date.now(),
+      });
+    }
+    // clear the tab
+    db.ref("tabs/" + activeTable).remove();
+    db.ref("occupied/" + activeTable).remove();
+    // clear any pending notifications for this table too
+    entriesForTable(activeTable).forEach(([key]) => db.ref("requests/" + key).remove());
+    closeSheet();
+  }
+
+  function openHistory() {
+    if (!firebaseReady) return;
+    db.ref("history").limitToLast(50).once("value", snapshot => {
+      const data = snapshot.val() || {};
+      const list = Object.values(data).sort((a, b) => b.closedAt - a.closedAt);
+      const box = document.getElementById("historyList");
+      if (list.length === 0) {
+        box.innerHTML = `<div class="feed-empty">Aucune vente enregistrée pour le moment</div>`;
+      } else {
+        box.innerHTML = list.map(h => {
+          const dateStr = new Date(h.closedAt).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+          const itemsStr = h.items.map(it => `${it.qty}× ${it.name}`).join(", ");
+          return `
+            <div style="background:var(--cream-2); border-radius:10px; padding:10px 12px; margin-bottom:8px;">
+              <div style="font-weight:600; display:flex; justify-content:space-between;">
+                <span>Table ${h.table}</span><span>${h.total.toFixed(1)} DT</span>
+              </div>
+              <div style="font-size:12px; color:#7a7367; margin-top:2px;">${itemsStr}</div>
+              <div style="font-size:11px; color:#9a9184; margin-top:2px;">${dateStr}</div>
+            </div>
+          `;
+        }).join("");
+      }
+      document.getElementById("historyOverlay").classList.add("show");
+    });
+  }
+
+  function closeHistory() {
+    document.getElementById("historyOverlay").classList.remove("show");
+  }
+
+  function playChime() {
+    const audio = document.getElementById("chime");
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+  }
+
+  function enableNotifications() {
+    if (!("Notification" in window)) {
+      alert("Les alertes ne sont pas prises en charge sur ce navigateur.");
+      return;
+    }
+    Notification.requestPermission().then(perm => {
+      notificationsEnabled = perm === "granted";
+      const btn = document.getElementById("enableBtn");
+      btn.innerText = notificationsEnabled ? "🔔 Alertes activées" : "🔔 Activer les alertes";
+      if (notificationsEnabled) {
+        new Notification("Les Jasmins", { body: "Les alertes sont activées ✓" });
+      } else {
+        alert("Pour recevoir les alertes, autorisez les notifications dans les réglages de votre navigateur.");
+      }
+    });
+  }
+
+  function showSystemNotification(r) {
+    if (!notificationsEnabled || !("Notification" in window)) return;
+    const body = r.type === "order" && r.items
+      ? r.items.map(it => `${it.qty}× ${it.name}`).join(", ")
+      : (typeLabels[r.type] || r.type);
+    try {
+      new Notification(`Table ${r.table} — ${typeShort[r.type] || r.type}`, { body });
+    } catch (e) { /* ignore */ }
+  }
+
+  buildGrid();
+
+  if (firebaseReady) {
+    db.ref("requests").on("value", (snapshot) => {
+      const newData = snapshot.val() || {};
+      const newKeys = new Set(Object.keys(newData));
+      const newlyAdded = [...newKeys].filter(k => !knownKeys.has(k));
+      if (newlyAdded.length > 0) {
+        playChime();
+        newlyAdded.forEach(k => showSystemNotification(newData[k]));
+      }
+      knownKeys = newKeys;
+      requestsData = newData;
+      renderState();
+    });
+    db.ref("tabs").on("value", (snapshot) => {
+      tabsData = snapshot.val() || {};
+      if (activeTable) openSheet(activeTable); // refresh open sheet live
+    });
+    db.ref("occupied").on("value", (snapshot) => {
+      occupiedData = snapshot.val() || {};
+      renderState();
+    });
+  } else {
+    document.querySelector(".subtitle").innerText = "⚠️ Firebase non configuré";
+  }
+
+</script>
+</body>
+</html>
